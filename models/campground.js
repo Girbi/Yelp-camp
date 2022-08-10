@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 const Schema = mongoose.Schema
 
-const campGroundsSchema = new Schema({
+const CampgroundsSchema = new Schema({
   title: String,
   price: Number,
   image: String,
@@ -9,4 +9,4 @@ const campGroundsSchema = new Schema({
   location: String,
 })
 
-export default mongoose.model('Campground', campGroundsSchema)
+export default mongoose.model('Campground', CampgroundsSchema)

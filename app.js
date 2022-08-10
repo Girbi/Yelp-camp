@@ -7,6 +7,7 @@ import methodOverride from 'method-override'
 import ejsMate from 'ejs-mate'
 import catchAsync from './utilities/catchAsync.js'
 import ExpressError from './utilities/ExpressError.js'
+import campgroundSchema from './schemas.js'
 
 mongoose
   .connect('mongodb://localhost:27017/yelp-camp')
@@ -36,11 +37,23 @@ app.get('/campgrounds/new', (req, res) => {
   res.render('campgrounds/new')
 })
 
+const validateCampground = function (req, res, next) {
+  const { error } = campgroundSchema.validate(req.body)
+  if (error) {
+    const msg = error.details.map(el => el.message).join(', ')
+    throw new ExpressError(msg, 400)
+  } else {
+    next()
+  }
+}
+
 app.post(
   '/campgrounds',
+  validateCampground,
   catchAsync(async (req, res, next) => {
-    if (!req.body.campground)
-      throw new ExpressError('Invalid Campground Data', 400)
+    // if (!req.body.campground)
+    //   throw new ExpressError('Invalid Campground Data', 400)
+
     const camp = new Campground(req.body.campground)
     await camp.save()
     res.redirect(`/campgrounds/${camp._id}`)
@@ -75,6 +88,7 @@ app.get(
 
 app.put(
   '/campgrounds/:id',
+  validateCampground,
   catchAsync(async (req, res) => {
     const { id } = req.params
     const camp = await Campground.findByIdAndUpdate(id, {
