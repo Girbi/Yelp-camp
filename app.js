@@ -2,12 +2,15 @@ import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import mongoose from 'mongoose'
-import Campground from './models/campground.js'
 import methodOverride from 'method-override'
 import ejsMate from 'ejs-mate'
+
 import catchAsync from './utilities/catchAsync.js'
 import ExpressError from './utilities/ExpressError.js'
-import campgroundSchema from './schemas.js'
+
+import { campgroundSchema, reviewSchema } from './schemas.js'
+import Campground from './models/campground.js'
+import Review from './models/review.js'
 
 mongoose
   .connect('mongodb://localhost:27017/yelp-camp')
@@ -47,6 +50,16 @@ const validateCampground = function (req, res, next) {
   }
 }
 
+const validateReview = function (req, res, next) {
+  const { error } = reviewSchema.validate(req.body)
+  if (error) {
+    const msg = error.details.map(el => el.message).join(', ')
+    throw new ExpressError(msg, 400)
+  } else {
+    next()
+  }
+}
+
 app.post(
   '/campgrounds',
   validateCampground,
@@ -72,7 +85,7 @@ app.get(
   '/campgrounds/:id',
   catchAsync(async (req, res) => {
     const { id } = req.params
-    const camp = await Campground.findById(id)
+    const camp = await Campground.findById(id).populate('reviews')
     res.render('campgrounds/show', { camp })
   })
 )
@@ -105,6 +118,30 @@ app.delete(
     const { id } = req.params
     await Campground.findByIdAndDelete(id)
     res.redirect('/campgrounds')
+  })
+)
+
+app.post(
+  '/campgrounds/:id/reviews',
+  validateReview,
+  catchAsync(async (req, res) => {
+    const camp = await Campground.findById(req.params.id)
+    const review = new Review(req.body.review)
+    camp.reviews.push(review)
+    Promise.all([camp.save(), review.save()])
+    res.redirect(`/campgrounds/${camp._id}`)
+  })
+)
+
+app.delete(
+  '/campgrounds/:id/reviews/:reviewId',
+  catchAsync(async (req, res) => {
+    const { id, reviewId } = req.params
+    Promise.all([
+      await Campground.findByIdAndUpdate(id, { $pull: { reviews: reviewId } }),
+      await Review.findByIdAndDelete(reviewId),
+    ])
+    res.redirect(`/campgrounds/${id}`)
   })
 )
 

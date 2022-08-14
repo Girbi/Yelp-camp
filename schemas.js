@@ -1,6 +1,6 @@
 import Joi from 'joi'
 
-export default Joi.object({
+const campgroundSchema = Joi.object({
   campground: Joi.object({
     title: Joi.string().required(),
     price: Joi.number().required().min(0),
@@ -9,3 +9,12 @@ export default Joi.object({
     description: Joi.string().required(),
   }).required(),
 })
+
+const reviewSchema = Joi.object({
+  review: Joi.object({
+    rating: Joi.number().required().min(1).max(5),
+    body: Joi.string().required(),
+  }).required(),
+})
+
+export { campgroundSchema, reviewSchema }
