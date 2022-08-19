@@ -1,7 +1,7 @@
 <% layout('layouts/boilerplate') %>
   <h1>All Campgrounds</h1>
-  <form action="/campgrounds/new">
-    <button>Add new Campground</button>
+  <form class="mb-3" action="/campgrounds/new">
+    <button class="btn btn-dark">Add new Campground</button>
   </form>
 
   <% for(let camp of campgrounds) { %>

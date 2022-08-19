@@ -12,6 +12,9 @@
           </p>
         </div>
         <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            Camp owner: <%= camp.author.username %>
+          </li>
           <li class="list-group-item text-muted">
             Location: <%= camp.location %>
           </li>
@@ -19,51 +22,61 @@
             Price: $<%= camp.price %>/night
           </li>
         </ul>
-        <div class="card-body">
-          <a href="/campgrounds/<%= camp._id %>/edit" class="card-link btn btn-warning">Edit</a>
-          <form class="d-inline" method="post" action="/campgrounds/<%= camp._id %>?_method=DELETE">
-            <button class="btn btn-danger">Delete</button>
-          </form>
-        </div>
+        <% if(currentUser && camp.author.equals(currentUser._id)){ %>
+          <div class="card-body">
+            <a href="/campgrounds/<%= camp._id %>/edit" class="card-link btn btn-warning">Edit</a>
+            <form class="d-inline" method="post" action="/campgrounds/<%= camp._id %>?_method=DELETE">
+              <button class="btn btn-danger">Delete</button>
+            </form>
+          </div>
+          <% } %>
       </div>
 
     </div>
 
     <div class="col-6">
       <!-- Add rating -->
-      <form action="/campgrounds/<%= camp._id %>/reviews " class="mb-3 validated-form" method="post" novalidate>
-        <h3>Leave a Review</h3>
-        <div class="mb-3">
-          <label for="rating" class="form-label">Rating</label>
-          <input type="range" min="1" max="5" name="review[rating]" id="rating" class="form-range">
-        </div>
-        <div class="mb-3">
-          <label for="body" class="form-label">Add review</label>
-          <textarea name="review[body]" id="body" cols="30" rows="3" class="form-control" required></textarea>
-          <div class="valid-feedback">Looks Good!</div>
-        </div>
-        <button class="btn btn-success">Submit</button>
-      </form>
-
-      <!-- See Reviews -->
-      <% for(let review of camp.reviews){ %>
-        <div class="card mb-3">
-          <div class="card-body">
-
-            <h5 class="card-title">
-              Review: <%= review.rating %> Stars
-            </h5>
-            <p class="card-text">
-              <%= review.body %>
-            </p>
-            <form action="/campgrounds/<%= camp._id %>/reviews/<%= review._id %>?_method=DELETE" method="post">
-              <button class="btn btn-sm btn-danger">
-                <img src="https://img.icons8.com/material/24/000000/trash--v1.png" /></button>
-            </form>
-
+      <% if(currentUser){ %>
+        <form action="/campgrounds/<%= camp._id %>/reviews " class="mb-3 validated-form" method="post" novalidate>
+          <h3>Leave a Review</h3>
+          <div class="mb-3">
+            <label for="rating" class="form-label">Rating</label>
+            <input type="range" min="1" max="5" name="review[rating]" id="rating" class="form-range">
           </div>
-        </div>
+          <div class="mb-3">
+            <label for="body" class="form-label">Add review</label>
+            <textarea name="review[body]" id="body" cols="30" rows="3" class="form-control" required></textarea>
+            <div class="valid-feedback">Looks Good!</div>
+          </div>
+          <button class="btn btn-success">Submit</button>
+        </form>
         <% } %>
+
+          <!-- See Reviews -->
+          <% for(let review of camp.reviews){ %>
+            <div class="card mb-3">
+              <div class="card-body">
+
+                <h5 class="card-title">
+                  Review: <%= review.rating %> Stars
+                </h5>
+                <p class="card-title text-muted">
+                  By: <%= review.author.username %>
+                    </>
+                    <p class="card-text">
+                      <%= review.body %>
+                    </p>
+                    <% if(currentUser && review.author.equals(currentUser._id)){ %>
+                      <form action="/campgrounds/<%= camp._id %>/reviews/<%= review._id %>?_method=DELETE"
+                        method="post">
+                        <button class="btn btn-sm btn-danger fw-bold" style="color:black">
+                          <img src="https://img.icons8.com/ios-glyphs/30/000000/delete-forever.png" />
+                        </button>
+                      </form>
+                      <% } %>
+              </div>
+            </div>
+            <% } %>
     </div>
 
   </div>

@@ -7,9 +7,14 @@ import ejsMate from 'ejs-mate'
 import ExpressError from './utilities/ExpressError.js'
 import session from 'express-session'
 import flash from 'connect-flash'
+import passport from 'passport'
+import LocalStrategy from 'passport-local'
+
+import User from './models/user.js'
 
 import campgroundRoute from './routes/campground.js'
 import reviewRoute from './routes/review.js'
+import userRoute from './routes/users.js'
 
 mongoose
   .connect('mongodb://localhost:27017/yelp-camp')
@@ -46,6 +51,12 @@ const sessionConfig = {
 app.use(session(sessionConfig))
 app.use(flash())
 
+app.use(passport.initialize())
+app.use(passport.session())
+passport.use(new LocalStrategy(User.authenticate()))
+passport.serializeUser(User.serializeUser())
+passport.deserializeUser(User.deserializeUser())
+
 // Routes
 
 app.use((req, res, next) => {
@@ -53,10 +64,12 @@ app.use((req, res, next) => {
     success: req.flash('success'),
     error: req.flash('error'),
     warning: req.flash('warning'),
+    currentUser: req.user,
   }
   next()
 })
 
+app.use('/', userRoute)
 app.use('/campgrounds', campgroundRoute)
 app.use('/campgrounds/:id/reviews', reviewRoute)
 
