@@ -10,6 +10,7 @@ const map = new mapboxgl.Map({
 map.on('style.load', () => {
   map.setFog({})
 })
+map.addControl(new mapboxgl.NavigationControl())
 
 new mapboxgl.Marker()
   .setLngLat(camp.geometry.coordinates)

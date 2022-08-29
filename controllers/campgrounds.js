@@ -65,14 +65,15 @@ const renderEditForm = catchAsync(async (req, res) => {
 
 const editCampground = catchAsync(async (req, res) => {
   const { id } = req.params
-  const camp = await Campground.findById(id)
+  const camp = await Campground.findByIdAndUpdate(id, {
+    ...req.body.campground,
+  })
   const images = req.files.map(file => ({
     url: file.path,
     filename: file.filename,
   }))
   camp.images.push(...images)
   await camp.save()
-  await camp.updateOne({ _id: id }, { ...req.body.campground })
 
   if (req.body.deleteImages) {
     for (let filename of req.body.deleteImages) {

@@ -4,6 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import mongoose from 'mongoose'
 import methodOverride from 'method-override'
+import ExpressMongoSanitize from 'express-mongo-sanitize'
 import ejsMate from 'ejs-mate'
 import ExpressError from './utilities/ExpressError.js'
 import session from 'express-session'
@@ -34,10 +35,11 @@ const __dirname = path.dirname(__filename)
 app.set('view engine', 'ejs')
 app.engine('ejs', ejsMate)
 app.set('views', path.join(__dirname, 'views'))
-app.use(express.static(path.join(__dirname, 'public')))
 
 app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
+app.use(express.static(path.join(__dirname, 'public')))
+app.use(ExpressMongoSanitize())
 
 const sessionConfig = {
   secret: 'mySecret',
@@ -61,6 +63,7 @@ passport.deserializeUser(User.deserializeUser())
 // Routes
 
 app.use((req, res, next) => {
+  console.log(req.query)
   res.locals = {
     success: req.flash('success'),
     error: req.flash('error'),
