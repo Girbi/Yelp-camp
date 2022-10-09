@@ -11,6 +11,8 @@ import session from 'express-session'
 import flash from 'connect-flash'
 import passport from 'passport'
 import LocalStrategy from 'passport-local'
+import helmet from 'helmet'
+import MongoStore from 'connect-mongo'
 
 import User from './models/user.js'
 
@@ -18,8 +20,10 @@ import campgroundRoute from './routes/campground.js'
 import reviewRoute from './routes/review.js'
 import userRoute from './routes/users.js'
 
+const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/yelp-camp'
+
 mongoose
-  .connect('mongodb://localhost:27017/yelp-camp')
+  .connect(dbUrl)
   .then(() => {
     console.log('Database connected')
   })
@@ -41,18 +45,71 @@ app.use(methodOverride('_method'))
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(ExpressMongoSanitize())
 
+const secret = process.env.SECRET || 'mySecretisawesome'
+
 const sessionConfig = {
-  secret: 'mySecret',
+  name: 'session',
+  secret,
+  store: MongoStore.create({
+    mongoUrl: dbUrl,
+    secret: 'mySecret',
+    touchAfter: 24 * 3600, //seconds
+  }),
   resave: false,
   saveUninitialized: true,
   cookie: {
     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
     maxAge: 1000 * 60 * 60 * 24 * 7,
     HttpOnly: true,
+    // secure: true,
   },
 }
 app.use(session(sessionConfig))
 app.use(flash())
+
+const scriptSrcUrls = [
+  'https://stackpath.bootstrapcdn.com',
+  'https://api.tiles.mapbox.com',
+  'https://api.mapbox.com',
+  'https://kit.fontawesome.com',
+  'https://cdnjs.cloudflare.com',
+  'https://cdn.jsdelivr.net',
+]
+const styleSrcUrls = [
+  'https://kit-free.fontawesome.com',
+  'https://stackpath.bootstrapcdn.com',
+  'https://api.mapbox.com',
+  'https://api.tiles.mapbox.com',
+  'https://fonts.googleapis.com',
+  'https://use.fontawesome.com',
+  'https://cdn.jsdelivr.net',
+]
+const connectSrcUrls = [
+  'https://api.mapbox.com',
+  'https://*.tiles.mapbox.com',
+  'https://events.mapbox.com',
+]
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: [],
+      connectSrc: ["'self'", ...connectSrcUrls],
+      scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+      styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+      workerSrc: ["'self'", 'blob:'],
+      childSrc: ['blob:'],
+      objectSrc: [],
+      imgSrc: [
+        "'self'",
+        'blob:',
+        'data:',
+        'https://res.cloudinary.com/dtrhzpdhi/',
+        'https://images.unsplash.com',
+      ],
+      fontSrc: ["'self'"],
+    },
+  })
+)
 
 app.use(passport.initialize())
 app.use(passport.session())
@@ -63,7 +120,6 @@ passport.deserializeUser(User.deserializeUser())
 // Routes
 
 app.use((req, res, next) => {
-  console.log(req.query)
   res.locals = {
     success: req.flash('success'),
     error: req.flash('error'),
